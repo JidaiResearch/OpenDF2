@@ -2001,7 +2001,7 @@ static void RB_RenderSSAO()
 {
 	const float zmax = backEnd.viewParms.zFar;
 	const float zmin = r_znear->value;
-	const vec4_t viewInfo = { zmax / zmin, zmax, 0.0f, 0.0f };
+	vec4_t viewInfo = { zmax / zmin, zmax, 0.0f, 0.0f };
 
 
 	FBO_Bind(tr.quarterFbo[0]);
@@ -2031,15 +2031,34 @@ static void RB_RenderSSAO()
 
 	RB_InstantQuad2(quadVerts, texCoords);
 
-	FBO_Bind(tr.quarterFbo[1]);
-
-	qglViewport(0, 0, tr.quarterFbo[1]->width, tr.quarterFbo[1]->height);
-	qglScissor(0, 0, tr.quarterFbo[1]->width, tr.quarterFbo[1]->height);
-
 	GLSL_BindProgram(&tr.depthBlurShader[0]);
 
+	FBO_Bind(tr.quarterFbo[1]);
+	qglViewport(0, 0, tr.quarterFbo[1]->width, tr.quarterFbo[1]->height);
+	qglScissor(0, 0, tr.quarterFbo[1]->width, tr.quarterFbo[1]->height);
 	GL_BindToTMU(tr.quarterImage[0],  TB_COLORMAP);
 	GL_BindToTMU(tr.hdrDepthImage, TB_LIGHTMAP);
+	VectorSet4(viewInfo, zmax / zmin, zmax, 2.0f, -2.0f );
+	GLSL_SetUniformVec4(&tr.depthBlurShader[0], UNIFORM_VIEWINFO, viewInfo);
+
+	RB_InstantQuad2(quadVerts, texCoords);
+
+	FBO_Bind(tr.quarterFbo[0]);
+	qglViewport(0, 0, tr.quarterFbo[1]->width, tr.quarterFbo[1]->height);
+	qglScissor(0, 0, tr.quarterFbo[1]->width, tr.quarterFbo[1]->height);
+	GL_BindToTMU(tr.quarterImage[1], TB_COLORMAP);
+	GL_BindToTMU(tr.hdrDepthImage, TB_LIGHTMAP);
+	VectorSet4(viewInfo, zmax / zmin, zmax, 2.0f, 2.0f);
+	GLSL_SetUniformVec4(&tr.depthBlurShader[0], UNIFORM_VIEWINFO, viewInfo);
+
+	RB_InstantQuad2(quadVerts, texCoords);
+
+	FBO_Bind(tr.quarterFbo[1]);
+	qglViewport(0, 0, tr.quarterFbo[1]->width, tr.quarterFbo[1]->height);
+	qglScissor(0, 0, tr.quarterFbo[1]->width, tr.quarterFbo[1]->height);
+	GL_BindToTMU(tr.quarterImage[0], TB_COLORMAP);
+	GL_BindToTMU(tr.hdrDepthImage, TB_LIGHTMAP);
+	VectorSet4(viewInfo, zmax / zmin, zmax, 0.0f, 1.0f);
 	GLSL_SetUniformVec4(&tr.depthBlurShader[0], UNIFORM_VIEWINFO, viewInfo);
 
 	RB_InstantQuad2(quadVerts, texCoords);
@@ -2049,10 +2068,11 @@ static void RB_RenderSSAO()
 	qglViewport(0, 0, tr.screenSsaoFbo->width, tr.screenSsaoFbo->height);
 	qglScissor(0, 0, tr.screenSsaoFbo->width, tr.screenSsaoFbo->height);
 
-	GLSL_BindProgram(&tr.depthBlurShader[1]);
+	//GLSL_BindProgram(&tr.depthBlurShader[1]);
 
 	GL_BindToTMU(tr.quarterImage[1],  TB_COLORMAP);
 	GL_BindToTMU(tr.hdrDepthImage, TB_LIGHTMAP);
+	VectorSet4(viewInfo, zmax / zmin, zmax, 1.0f, 0.0f);
 	GLSL_SetUniformVec4(&tr.depthBlurShader[1], UNIFORM_VIEWINFO, viewInfo);
 
 	RB_InstantQuad2(quadVerts, texCoords);
